@@ -2,7 +2,14 @@ package mflix.api.daos;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.*;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.BsonField;
+import com.mongodb.client.model.BucketOptions;
+import com.mongodb.client.model.Facet;
+import com.mongodb.client.model.Field;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -11,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -168,10 +174,8 @@ public class MovieDao extends AbstractMFlixDao {
      * @return List of documents sorted by sortKey that match the cast selector.
      */
     public List<Document> getMoviesByCast(String sortKey, int limit, int skip, String... cast) {
-        Bson castFilter = null;
-        Bson sort = null;
-        //TODO> Ticket: Subfield Text Search - implement the expected cast
-        // filter and sort
+        Bson castFilter = Filters.all("cast", cast);
+        Bson sort = Sorts.descending(sortKey);
         List<Document> movies = new ArrayList<>();
         moviesCollection
                 .find(castFilter)
@@ -198,10 +202,13 @@ public class MovieDao extends AbstractMFlixDao {
         // sort key
         Bson sort = Sorts.descending(sortKey);
         List<Document> movies = new ArrayList<>();
-        // TODO > Ticket: Paging - implement the necessary cursor methods to support simple
         // pagination like skip and limit in the code below
-        moviesCollection.find(castFilter).sort(sort).iterator()
-        .forEachRemaining(movies::add);
+        moviesCollection.find(castFilter)
+                .sort(sort)
+                .limit(limit)
+                .skip(skip)
+                .iterator()
+                .forEachRemaining(movies::add);
         return movies;
     }
 
